@@ -5,7 +5,8 @@ using DAL.Models;
 
 namespace BLL.Repository
 {
-    public interface IRepository<T> where T : EntityBase
+    public interface IRepository<T> 
+        where T : EntityBase
     {
         bool Add(List<T> _objects);
         bool Add(T _object);
