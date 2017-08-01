@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 
 namespace BLL.Repository
 {
-    public class Repository<TContext, TEntity> : IDisposable, IRepository<TEntity>
+    public class Repository<TContext, TEntity> : IDisposable, IRepository<TEntity> 
         where TEntity : EntityBase
         where TContext : DbContext, new()
     {
@@ -73,10 +73,10 @@ namespace BLL.Repository
                 return query.ToList();
             }
         }
-        public virtual IEnumerable<TEntity> GetAll(Expression<Func<TEntity, bool>> p = null)
+        public virtual IEnumerable<TEntity> GetAll(Expression<Func<TEntity, bool>> filter = null)
         {
-            if (p != null)
-                return this.EntitySet.Where(p).ToList();
+            if (filter != null)
+                return this.EntitySet.Where(filter).ToList();
             else
                 return this.EntitySet.ToList();
         }
@@ -106,10 +106,10 @@ namespace BLL.Repository
                 return null;
             return this.EntitySet.FirstOrDefault(x => x.Id == _id);
         }
-        public virtual TEntity Find(Expression<Func<TEntity, bool>> p)
+        public virtual TEntity Find(Expression<Func<TEntity, bool>> filter)
         {
-            if (p != null)
-                return this.EntitySet.FirstOrDefault(p);
+            if (filter != null)
+                return this.EntitySet.FirstOrDefault(filter);
             return null;
         }
         public virtual TEntity Firts()
@@ -131,11 +131,11 @@ namespace BLL.Repository
             this.EntitySet.Remove(_data);
             return true;
         }
-        public virtual bool Delete(Expression<Func<TEntity, bool>> p)
+        public virtual bool Delete(Expression<Func<TEntity, bool>> filter)
         {
-            if (p == null)
+            if (filter == null)
                 return false;
-            var data = this.EntitySet.Where(p);
+            var data = this.EntitySet.Where(filter);
             if (data.Count() == 0)
             {
                 return false;
