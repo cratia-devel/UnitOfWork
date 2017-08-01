@@ -59,6 +59,24 @@ namespace BLL.Repository
         {
             bool saveFailed;
             int count = 0;
+
+            foreach (var entry in this.Context.ChangeTracker.Entries())
+            {
+                EntityBase entity = (EntityBase)entry.Entity;
+                if (entry.State == EntityState.Added)
+                {
+                    entity.Created_At = DateTime.Now;
+                }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entity.Updated_At = DateTime.Now;
+                }
+                else if (entry.State == EntityState.Deleted)
+                {
+                    entity.Deleted_At = DateTime.Now;
+                }
+            }
+
             do
             {
                 saveFailed = false;

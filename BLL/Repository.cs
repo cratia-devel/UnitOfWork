@@ -150,7 +150,6 @@ namespace BLL.Repository
             {
                 return false;
             }
-            _objectupdate.Updated_At = DateTime.Now;
             this.EntitySet.Attach(_objectupdate);
             this.Context.Entry(_objectupdate).State = EntityState.Modified;
             return true;
