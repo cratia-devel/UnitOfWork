@@ -7,24 +7,10 @@ using System.Linq.Expressions;
 
 namespace BLL.Repository
 {
-    public class Repository<T> : IDisposable, IRepository<T> 
-        where T : EntityBase
+    public class Repository<TContext, TEntity> : IDisposable, IRepository<TEntity>
+        where TEntity : EntityBase
+        where TContext : DbContext, new()
     {
-        private DbContext Context;
-        private DbSet<T> EntitySet;
-
-        public Repository()
-        {
-            this.Context = new SystemContext();
-            this.EntitySet = this.Context.Set<T>();
-        }
-
-        public Repository(DbContext _DbContext)
-        {
-            this.Context = _DbContext;
-            this.EntitySet = this.Context.Set<T>();
-        }
-
         #region IDisposable Support
         private bool disposedValue = false; // Para detectar llamadas redundantes
 
@@ -34,12 +20,8 @@ namespace BLL.Repository
             {
                 if (disposing)
                 {
-                    Context.Dispose();
-                    // TODO: elimine el estado administrado (objetos administrados).
+                    this.Context.Dispose();
                 }
-                // TODO: libere los recursos no administrados (objetos no administrados) y reemplace el siguiente finalizador.
-                // TODO: configure los campos grandes en nulos.
-
                 disposedValue = true;
             }
         }
@@ -50,128 +32,128 @@ namespace BLL.Repository
         }
         #endregion
 
-        public virtual IEnumerable<T> GetAll()
+        private readonly TContext Context = null;
+        private readonly DbSet<TEntity> EntitySet = null;
+
+        public Repository()
         {
-            return this.EntitySet.ToList();
+            this.Context = new TContext();
+            this.EntitySet = this.Context.Set<TEntity>();
+        }
+        public Repository(TContext _DbContext)
+        {
+            this.Context = _DbContext;
+            this.EntitySet = this.Context.Set<TEntity>();
         }
 
-        public virtual IEnumerable<T> GetAll(Expression<Func<T, bool>> p)
+        public virtual IEnumerable<TEntity> Get(
+            Expression<Func<TEntity, bool>> filter = null,
+            Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>> orderBy = null,
+            string includeProperties = "")
         {
-            return this.EntitySet.Where(p).ToList();
-        }
+            IQueryable<TEntity> query = this.EntitySet;
 
-        public virtual bool Add(T _object)
-        {
-            if ((_object is T) && (_object != null))
+            if (filter != null)
             {
-                try
-                {
-                    EntitySet.Add(_object);
-                    int count = Context.SaveChanges();
-                    if (count > 0)
-                    {
-                        return true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    this.Context.Entry(_object).State = EntityState.Detached;
-                    Console.WriteLine("Context.Entry({0}).State = EntityState.Detached", _object);
-                    Console.WriteLine("[ERROR] -- Exception: " + ex.Message);
-                    Console.WriteLine(ex.InnerException.Message);
-                }
+                query = query.Where(filter);
+            }
+
+            foreach (var includeProperty in includeProperties.Split
+                (new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                query = query.Include(includeProperty);
+            }
+
+            if (orderBy != null)
+            {
+                return orderBy(query).ToList();
+            }
+            else
+            {
+                return query.ToList();
+            }
+        }
+        public virtual IEnumerable<TEntity> GetAll(Expression<Func<TEntity, bool>> p = null)
+        {
+            if (p != null)
+                return this.EntitySet.Where(p).ToList();
+            else
+                return this.EntitySet.ToList();
+        }
+
+        public virtual bool Add(TEntity _object)
+        {
+            if ((_object is TEntity) && (_object != null))
+            {
+                EntitySet.Add(_object);
+                return true;
             }
             return false;
         }
-        public virtual bool Add(List<T> _objects)
+        public virtual bool Add(List<TEntity> _objects)
         {
-            if ((_objects is List<T>) && (_objects != null))
+            if ((_objects is List<TEntity>) && (_objects != null))
             {
-                try
-                {
-                    EntitySet.AddRange(_objects);
-                    int count = Context.SaveChanges();
-                    if (count > 0)
-                    {
-                        return true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    foreach (var item in _objects)
-                    {
-                        this.Context.Entry(item).State = EntityState.Detached;
-                        Console.WriteLine("Context.Entry({0}).State = EntityState.Detached", item);
-                    }
-                    Console.WriteLine("[ERROR] -- Exception: " + ex.Message);
-                    Console.WriteLine(ex.InnerException.Message);
-                }
+                EntitySet.AddRange(_objects);
+                return true;
             }
             return false;
         }
-        public virtual T Find(int _id)
+
+        public virtual TEntity Find(int _id)
         {
+            if (_id < 0)
+                return null;
             return this.EntitySet.FirstOrDefault(x => x.Id == _id);
         }
-        public virtual T Find(Expression<Func<T, bool>> p)
+        public virtual TEntity Find(Expression<Func<TEntity, bool>> p)
         {
-            return this.EntitySet.FirstOrDefault(p);
+            if (p != null)
+                return this.EntitySet.FirstOrDefault(p);
+            return null;
         }
-        public virtual T Firts()
+        public virtual TEntity Firts()
         {
             return this.EntitySet.FirstOrDefault();
         }
-        public virtual T Last()
+        public virtual TEntity Last()
         {
             return this.EntitySet.LastOrDefault();
         }
+
         public virtual bool Delete(int _id)
         {
-            try
-            {
-                if (_id < 0)
-                    return false;
-                T _data = this.EntitySet.Find(_id);
-                if (_data == null)
-                    return false;
-                this.EntitySet.Remove(_data);
-                int count = this.Context.SaveChanges();
-                if (count > 0)
-                {
-                    return true;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[ERROR] -- Exception: " + ex.Message);
-                Console.WriteLine(ex.InnerException.Message);
-            }
-            return false;
+            if (_id < 0)
+                return false;
+            TEntity _data = this.EntitySet.Find(_id);
+            if (_data == null)
+                return false;
+            this.EntitySet.Remove(_data);
+            return true;
         }
-        public virtual bool Delete(Expression<Func<T, bool>> p)
+        public virtual bool Delete(Expression<Func<TEntity, bool>> p)
         {
-            try
+            if (p == null)
+                return false;
+            var data = this.EntitySet.Where(p);
+            if (data.Count() == 0)
             {
-                if (p == null)
-                    return false;
-                var data = this.EntitySet.Where(p);
-                if (data.Count() == 0)
-                {
-                    return false;
-                }
-                this.EntitySet.RemoveRange(data);
-                int count = this.Context.SaveChanges();
-                if (count > 0)
-                {
-                    return true;
-                }
+                return false;
             }
-            catch (Exception ex)
+            this.EntitySet.RemoveRange(data);
+            return true;
+        }
+
+        public virtual bool Update(TEntity _objectupdate)
+        {
+            if (_objectupdate == null)
             {
-                Console.WriteLine("[ERROR] -- Exception: " + ex.Message);
-                Console.WriteLine(ex.InnerException.Message);
+                return false;
             }
-            return false;
+            _objectupdate.Updated_At = DateTime.Now;
+            this.EntitySet.Attach(_objectupdate);
+            this.Context.Entry(_objectupdate).State = EntityState.Modified;
+            return true;
         }
     }
 }

@@ -9,42 +9,54 @@ namespace BLL
 {
     class Program
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
         static void Main(string[] args)
         {
-            using (var repo = new Repository<Person>())
+            using (var uow = new UnitOfWork<SystemContext>())
             {
-
                 Random rnd = new Random();
-                List<Person> data = new List<Person>();
-                data.Add(new Person
-                {
-                    FirstName = "Carlos",
-                    LastName = "Ratia",
-                });
-                data.Add(new Person
-                {
-                    FirstName = "Ignacio",
-                    LastName = "Ratia",
-                });
-                data.Add(new Person
-                {
-                    FirstName = "Ignacio",
-                    LastName = "Ratia",
-                });
+                uow.GetRepository<Person>()
+                    .Add(new Person
+                    {
+                        FirstName = "Sofia",
+                        LastName = "Ratia",
+                    });
+                uow.GetRepository<Person>()
+                    .Add(new Person
+                    {
+                        FirstName = "Sofia",
+                        LastName = "Ratia",
+                    });
+                uow.GetRepository<Person>()
+                    .Add(new Person
+                    {
+                        FirstName = "Camila",
+                        LastName = "Canaval",
+                    });
+                uow.GetRepository<WasteType>()
+                    .Add(
+                        new WasteType
+                        {
+                            Description = "DESPERDICIO POLLO",
+                        }
+                    );
+                if (uow.Commit() > 0)
+                    Console.WriteLine("Successfully saved data.......!!!!!");
 
-                repo.Add(data);
-
-                if (repo.Delete(x => x.LastName == "Ratia"))
-                    Console.WriteLine("Eliminado Persona");
-                if (repo.Delete(3))
-                    Console.WriteLine("Eliminado Persona");
-                Console.WriteLine("Data en Tabla Personas");
-                var data1 = repo.GetAll();
-                foreach (var item in data1)
+                WasteType dataupdate = uow
+                    .GetRepository<WasteType>()
+                    .Find(wt => wt.Description == "DESPERDICIO BOVINO");
+                if (dataupdate != null)
                 {
-                    Console.WriteLine(item);
+                    dataupdate.Description = "_DESPERDICIO_BOVINO_";
+                    uow.GetRepository<WasteType>()
+                        .Update(dataupdate);
+                    if (uow.Commit() > 0)
+                        Console.WriteLine("Successfully updated data.......!!!!!");
                 }
-
             }
             Console.ReadKey();
         }
