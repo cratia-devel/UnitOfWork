@@ -15,6 +15,11 @@ namespace DAL.Models
             render += this.LastName + " ";
             render += "\t{" + this.Created_At.ToString();
             render += " | " + this.Updated_At.ToString() + "}";
+            if(Business != null)
+                foreach (var item in this.Business)
+                {
+                    render += " \n\t +" + item.ToString();
+                }
             return render;
         }
         public string FullName()

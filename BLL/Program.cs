@@ -9,56 +9,47 @@ namespace BLL
 {
     class Program
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="args"></param>
         static void Main(string[] args)
         {
             using (var uow = new UnitOfWork<SystemContext>())
             {
                 Random rnd = new Random();
-                uow.GetRepository<Person>()
-                    .Add(new Person
+                uow.GetRepository<Waste>()
+                    .Add(new Waste
                     {
-                        FirstName = "Sofia",
-                        LastName = "Ratia",
+                        DateTime = DateTime.Now,
+                        WasteType = uow.GetRepository<WasteType>().Firts(),
+                        Weight = Math.Round((double)rnd.Next(1, 10000) / (double)rnd.Next(1, 100), 2),
+                        Cost = Math.Round((double)rnd.Next(1, 10000) / (double)rnd.Next(1, 100), 2),
+                        Partners = new HashSet<Partner>
+                            {
+                                new Partner {
+                                    Person = uow.GetRepository<Person>().Firts(),
+                                    Percentage = 0.50,
+                                },
+                                new Partner {
+                                    Person = uow.GetRepository<Person>().Last(),
+                                    Percentage = 0.50,
+                                },
+                            },
+                        SalePrice = 2.0 * Math.Round((double)rnd.Next(1, 10000) / (double)rnd.Next(1, 100), 2),
                     });
-                uow.GetRepository<Person>()
-                    .Add(new Person
-                    {
-                        FirstName = "Sofia",
-                        LastName = "Ratia",
-                    });
-                uow.GetRepository<Person>()
-                    .Add(new Person
-                    {
-                        FirstName = "Camila",
-                        LastName = "Canaval",
-                    });
-                uow.GetRepository<WasteType>()
-                    .Add(
-                        new WasteType
-                        {
-                            Description = "DESPERDICIO POLLO",
-                        }
-                    );
                 if (uow.Commit() > 0)
-                    Console.WriteLine("Successfully saved data.......!!!!!");
-
-                WasteType dataupdate = uow
-                    .GetRepository<WasteType>()
-                    .Find(wt => wt.Description == "DESPERDICIO BOVINO");
-                if (dataupdate != null)
                 {
-                    dataupdate.Description = "_DESPERDICIO_BOVINO_";
-                    uow.GetRepository<WasteType>()
-                        .Update(dataupdate);
-                    if (uow.Commit() > 0)
-                        Console.WriteLine("Successfully updated data.......!!!!!");
+                    Console.WriteLine("<-------List Of Wasted------->");
+                    foreach (var item in uow.GetRepository<Waste>().GetAll())
+                    {
+                        Console.WriteLine(item);
+                    }
                 }
-            }
-            Console.ReadKey();
-        }
+
+                Console.WriteLine("<-------List Of Person------->");
+                foreach (var item in uow.GetRepository<Person>().Get(null, null, "Business"))
+                {
+                    Console.WriteLine(item);
+                }
+                Console.ReadKey();
+            }            
+        }        
     }
 }

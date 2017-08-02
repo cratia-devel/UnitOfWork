@@ -10,8 +10,8 @@
             render += "[" + this.Id.ToString() + "] - ";
             render += this.Person.FullName() + " ";
             render += this.Percentage.ToString("P2") + " ";
-            render += "\t{" + this.Created_At.ToString();
-            render += " | " + this.Updated_At.ToString() + "}";
+            //render += "\t{" + this.Created_At.ToString();
+            //render += " | " + this.Updated_At.ToString() + "}";
             return render;
         }
     }

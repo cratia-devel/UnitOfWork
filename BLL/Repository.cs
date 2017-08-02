@@ -40,7 +40,7 @@ namespace BLL.Repository
             this.Context = new TContext();
             this.EntitySet = this.Context.Set<TEntity>();
         }
-        public Repository(TContext _DbContext)
+        public Repository(ref TContext _DbContext)
         {
             this.Context = _DbContext;
             this.EntitySet = this.Context.Set<TEntity>();

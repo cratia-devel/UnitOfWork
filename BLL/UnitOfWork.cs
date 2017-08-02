@@ -3,8 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System;
 using System.Collections.Generic;
-using System.Data;
-using System.Diagnostics;
 using System.Linq;
 
 namespace BLL.Repository
@@ -33,7 +31,7 @@ namespace BLL.Repository
         }
         #endregion
 
-        private readonly TContext Context = null;
+        private TContext Context = null;
         private readonly Dictionary<Type, object> Repositories = null;
 
         public UnitOfWork()
@@ -49,7 +47,7 @@ namespace BLL.Repository
             {
                 this.Repositories.Add(
                     typeof(TEntity),
-                    new Repository<TContext, TEntity>(this.Context)
+                    new Repository<TContext, TEntity>(ref this.Context)
                     );
             }
             return Repositories[typeof(TEntity)] as IRepository<TEntity>; ;
@@ -139,6 +137,27 @@ namespace BLL.Repository
             foreach (var item in _data)
             {
                 _dataObject.Add(item.CurrentValues.ToObject());
+            }
+            return _dataObject;
+        }
+
+        public IEnumerable<TEntity> RollBack<TEntity>()
+            where TEntity : EntityBase
+        {
+            List<EntityEntry> _data = Context.ChangeTracker.Entries()
+                .Where(
+                    x => (
+                        (x.Entity.GetType() == typeof(TEntity))
+                     ))
+                .ToList();
+            foreach (var entry in _data)
+            {
+                this.RollBack(entry);
+            }
+            List<TEntity> _dataObject = new List<TEntity>();
+            foreach (var item in _data)
+            {
+                _dataObject.Add(((TEntity)(item.CurrentValues.ToObject())));
             }
             return _dataObject;
         }

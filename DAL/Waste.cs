@@ -14,7 +14,7 @@ namespace DAL.Models
         public double Weight { get; set; } = 0.0;
         public double Cost { get; set; } = 0.0;
         public double SalePrice { get; set; } = 0.0;
-        public HashSet<Partner> Partners { get; private set; }
+        public HashSet<Partner> Partners { get; set; }
         public override string ToString()
         {
             string render = string.Empty;
